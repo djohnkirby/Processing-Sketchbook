@@ -646,7 +646,7 @@ class GravField
   void findAllPoints()
   {
     Ball testMass;
-    PVector thisGrav;
+    PVector thisGrav = new PVector(0,0);
     int x, y;
     for( int i = 0; i < fieldWid; i ++ )
     {
@@ -655,7 +655,7 @@ class GravField
         x = i*10;
         y = j*10;
         testMass = new Ball(x, y, 0, 0, 0, 0, 1); 
-        thisGrav = testMass.findGravity( ballList );
+        thisGrav = testMass.findGravity( ballList, thisGrav );
         field[i][j] = thisGrav;
       }
     } 
@@ -716,9 +716,8 @@ class Ball
     }
   }
   
-  PVector findGravity(ArrayList ballList)
+  PVector findGravity(ArrayList ballList, PVector gravityVec)
   {
-     PVector returnMe = new PVector(0,0);
      float gravityFelt, otherDist;
      int s = ballList.size();
      Ball otherBall;
@@ -729,7 +728,7 @@ class Ball
         mass = otherBall.mass;
         otherDist = dist(otherBall.xpos, otherBall.ypos, xpos, ypos);
         //If I'm looking at myself just hop to the next one.
-        if (otherDist < 0.1)
+        if (otherDist < 0.01)
           continue;
 
         //Handle balls inside other balls.
@@ -737,17 +736,19 @@ class Ball
           gravityFelt = otherBall.mass/pow(otherBall.rad, 3);
         else
           gravityFelt = otherBall.mass/pow(otherDist, 3);
-        returnMe.set(returnMe.x +  gravityFelt*(xpos-otherBall.xpos), returnMe.y + gravityFelt*(ypos-otherBall.ypos));
+          
+        gravityVec.add(gravityFelt*(xpos-otherBall.xpos),gravityFelt*(ypos-otherBall.ypos),0);
     }
-    return returnMe;
+    return gravityVec;
   }
+  
   void move(ArrayList ballList)
   {
     Ball otherBall;
     float otherDist, rho, mass;
     /*float gravityFeltX = 0;//Actually has units of accelleration
     float gravityFeltY = 0;//Actually has units of accelleration*/
-    PVector gravityVec;
+    PVector gravityVec = new PVector(0,0);
     /* if (simNum == 0)
      {
      if ( (xpos > width)|| (xpos <0))
@@ -758,7 +759,7 @@ class Ball
 
     for ( int i = 0; i < nSteps; i ++ )
     {
-      gravityVec = this.findGravity( ballList );   
+      gravityVec = this.findGravity( ballList, gravityVec );   
       xvel = xvel - gravityVec.x/nSteps;
       yvel = yvel - gravityVec.y/nSteps;
       xpos = xpos + xvel/nSteps;
