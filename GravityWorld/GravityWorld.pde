@@ -12,18 +12,24 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
-int nSteps = 100;
+int nSteps = 1000;
 ArrayList harmonicList = new ArrayList<Harmonic>();
 
 void setup()
 {
  size(800, 600); 
+ Spring s = new Spring( width/2, height/2, width/2+100, height/2+100, 0.0001, 10^50);
+ Spring s1 = new Spring( width/2, height/2, width/2-100, height/2+100, 0.0001, 10^50);
+ harmonicList.add(s);
+ harmonicList.add(s1);
+ rectMode(CENTER);
 }
 
 void draw()
 {
   background(0);
-  
+  moveAllHarmonics();
+  drawAllHarmonics();
 }
 
 PVector hat( PVector input )
@@ -46,12 +52,12 @@ PVector getGravitationalField( PVector pos )
    r = otherPos.get();
    r.sub(pos);
    /*If this is an object that's REALLY close skip it so we don't have integration problems*/
-   if( r.mag() < 0.01 )
+   if( r.mag() < 5 )
      continue;
      
    rhat = hat(r);
    rhat.mult(-mass / (r.mag()*r.mag()));
-   field.add( rhat );
+   field.sub( rhat );
  } 
  
  return field;
@@ -62,6 +68,12 @@ class Harmonic
   PVector pos, vel, accel;
   float mass;  
   boolean isClicked; //lets you move the bob
+  public void move()
+  {
+  }
+  public void drawSelf()
+  {
+  }
 }
 
 class Spring extends Harmonic
@@ -82,7 +94,7 @@ class Spring extends Harmonic
    equiClicked = false;
  }
  
- void move()
+ public void move()
  {
    PVector distanceVec;
    for( int i = 0; i < nSteps; i ++ )
@@ -101,17 +113,8 @@ class Spring extends Harmonic
       pos.add(vel.x/nSteps, vel.y/nSteps, 0); 
    }
  }
- 
- void moveAllHarmonics()
- {
-  int s = harmonicList.size();
-  for( int i = 0; i < s; i ++ )
-  {
-   harmonicList.get(i))
-  } 
- }
- 
- void drawSelf()
+
+  void drawSelf()
  {
    stroke(100,20,244);
    line(pos.x, pos.y, equi.x, equi.y);
@@ -120,3 +123,23 @@ class Spring extends Harmonic
    rect(pos.x, pos.y, 10, 10);
  }
 }
+
+ void moveAllHarmonics()
+ {
+  int s = harmonicList.size();
+  for( int i = 0; i < s; i ++ )
+  {
+   ((Harmonic)(harmonicList.get(i))).move();
+  } 
+ }
+ 
+ void drawAllHarmonics()
+ {
+  int s = harmonicList.size();
+  for( int i = 0; i < s; i ++ )
+  {
+    ((Harmonic)(harmonicList.get(i))).drawSelf();
+  } 
+ }
+
+
