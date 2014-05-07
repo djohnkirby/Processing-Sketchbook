@@ -1,6 +1,4 @@
-/* OpenProcessing Tweak of *@*http://www.openprocessing.org/sketch/108426*@* */
-/* !do not delete the line above, required for linking your tweak if you upload again */
-//Copyright (C) 2013
+//Copyright (C) 2014
 //D. John Kirby
 /*
     This program is free software: you can redistribute it and/or modify
@@ -613,6 +611,68 @@ float[] findCoM(ArrayList ballList)
   return CoM;
 }
 
+/* This class is used to draw the gravitational field at set points on the grid*/
+class GravField
+{
+  PVector[][] field;
+  int fieldWid;
+  int fieldHt;
+  GravField()
+  {
+   fieldWid = width/10;
+   fieldHt = height/10;
+   field = new PVector[fieldWid][fieldHt];
+   this.findAllPoints();
+   this.drawSelf();
+  }
+  
+  void drawSelf()
+  {
+    int x, y;
+    PVector thisVec;
+    for( int i = 0; i < fieldWid; i ++ )
+    {
+      for( int j = 0; j < fieldHt; j ++ )
+      {
+        stroke(255);
+        x = i*10;
+        y = j*10;
+        thisVec = field[i][j];
+        arrow( x, y, x + (int)thisVec.x, y + (int)thisVec.y ); 
+      }      
+    } 
+  }
+  
+  void findAllPoints()
+  {
+    Ball testMass;
+    PVector thisGrav;
+    int x, y;
+    for( int i = 0; i < fieldWid; i ++ )
+    {
+      for( int j = 0; j < fieldHt; j ++ )
+      {
+        x = i*10;
+        y = j*10;
+        testMass = new Ball(x, y, 0, 0, 0, 0, 1); 
+        thisGrav = testMass.findGravity( ballList );
+        field[i][j] = thisGrav;
+      }
+    } 
+  }
+}
+
+  void arrow(int x1, int y1, int x2, int y2) {
+  line(x1, y1, x2, y2);
+  pushMatrix();
+  translate(x2, y2);
+  float a = atan2(x1-x2, y2-y1);
+  rotate(a);
+  line(0, 0, -10, -10);
+  line(0, 0, 10, -10);
+  popMatrix();
+} 
+
 class Ball
 {
   float xpos, ypos, xvel, yvel, rad, fric, mass;
@@ -655,31 +715,16 @@ class Ball
       }
     }
   }
-
-  void move(ArrayList ballList)
+  
+  PVector findGravity(ArrayList ballList)
   {
-    Ball otherBall;
-    float otherDist, rho, mass;
-    float gravityFeltX = 0;//Actually has units of accelleration
-    float gravityFeltY = 0;//Actually has units of accelleration
-    float gravityFelt = 0;  
-    /* if (simNum == 0)
-     {
-     if ( (xpos > width)|| (xpos <0))
-     xvel = -xvel;
-     if (ypos > height || (ypos < 0))
-     yvel = -yvel;
-     }*/
+     PVector returnMe = new PVector(0,0);
+     float gravityFelt, otherDist;
+     int s = ballList.size();
+     Ball otherBall;
 
-    for ( int i = 0; i < nSteps; i ++ )
-    {
-      gravityFeltX = 0;//Actually has units of accelleration
-      gravityFeltY = 0;//Actually has units of accelleration
-      gravityFelt = 0; 
-
-      for ( int j = 0; j < ballList.size(); j++)
+     for ( int j = 0; j < s; j++)
       {
-
         otherBall = (Ball)(ballList.get(j));
         mass = otherBall.mass;
         otherDist = dist(otherBall.xpos, otherBall.ypos, xpos, ypos);
@@ -692,12 +737,30 @@ class Ball
           gravityFelt = otherBall.mass/pow(otherBall.rad, 3);
         else
           gravityFelt = otherBall.mass/pow(otherDist, 3);
+        returnMe.set(returnMe.x +  gravityFelt*(xpos-otherBall.xpos), returnMe.y + gravityFelt*(ypos-otherBall.ypos));
+    }
+    return returnMe;
+  }
+  void move(ArrayList ballList)
+  {
+    Ball otherBall;
+    float otherDist, rho, mass;
+    /*float gravityFeltX = 0;//Actually has units of accelleration
+    float gravityFeltY = 0;//Actually has units of accelleration*/
+    PVector gravityVec;
+    /* if (simNum == 0)
+     {
+     if ( (xpos > width)|| (xpos <0))
+     xvel = -xvel;
+     if (ypos > height || (ypos < 0))
+     yvel = -yvel;
+     }*/
 
-        gravityFeltX = gravityFeltX +  gravityFelt*(xpos-otherBall.xpos);
-        gravityFeltY = gravityFeltY + gravityFelt*(ypos-otherBall.ypos);
-      }
-      xvel = xvel - gravityFeltX/nSteps;
-      yvel = yvel - gravityFeltY/nSteps;
+    for ( int i = 0; i < nSteps; i ++ )
+    {
+      gravityVec = this.findGravity( ballList );   
+      xvel = xvel - gravityVec.x/nSteps;
+      yvel = yvel - gravityVec.y/nSteps;
       xpos = xpos + xvel/nSteps;
       ypos = ypos + yvel/nSteps;
     }
@@ -772,5 +835,6 @@ void drawColorWheel()
     startAngle = startAngle + stepLength;
     
   }
+
 }
 
