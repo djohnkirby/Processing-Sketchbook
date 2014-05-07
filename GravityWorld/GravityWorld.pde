@@ -18,10 +18,13 @@ ArrayList harmonicList = new ArrayList<Harmonic>();
 void setup()
 {
  size(800, 600); 
- Spring s = new Spring( width/2, height/2, width/2+100, height/2+100, 0.0001, 10^50);
- Spring s1 = new Spring( width/2, height/2, width/2-100, height/2+100, 0.0001, 10^50);
+ Spring s = new Spring( width/2, height/2, width/2+100, height/2, 0.0001, 10^500);
+ Spring s1 = new Spring( width/2, height/2, width/2-100, height/2+100, 0.0001, 10^500);
  harmonicList.add(s);
  harmonicList.add(s1);
+
+ HardPendulum h = new HardPendulum(width/2, height/2, width/2, height/2+100, 10^50);
+ harmonicList.add(h);
  rectMode(CENTER);
 }
 
@@ -76,6 +79,51 @@ class Harmonic
   }
 }
 
+class HardPendulum extends Harmonic
+{
+ PVector pivot;
+ float cordLen; //This is the distance the pendulum is restricted to being from the pivot 
+ boolean pivotClicked;
+ 
+ HardPendulum( float pivotX, float pivotY, float x, float y, float mass )
+ {
+  pivot = new PVector(pivotX, pivotY);
+  pos = new PVector(x ,y);
+  this.mass = mass;
+  vel = new PVector(0,0);
+  accel = new PVector(0,0); 
+ }
+ 
+ void move()
+ {
+   PVector gravField = getGravitationalField(pos);
+   float gravDotNorm;
+   PVector PVectorNorm = pos.get();
+   PVectorNorm.sub(pivot);
+   PVectorNorm.rotate(PI/2);
+   //print(PVectorNorm.y+"\n");
+   PVectorNorm = hat( PVectorNorm );
+ //  print(PVectorNorm.x+"\n");
+   gravDotNorm = PVectorNorm.dot(gravField);
+  // print(gravField.x+"\n");
+   PVectorNorm.mult(gravDotNorm);
+  // print(PVectorNorm.x+"\n");
+   accel.set(PVectorNorm);
+   accel.mult(10000);
+   vel.add(accel.x/nSteps, accel.y/nSteps, 0);
+   pos.add(vel.x/nSteps, vel.y/nSteps, 0); 
+ }
+ 
+ void drawSelf()
+ {
+   stroke(155,235,11);
+   line(pos.x, pos.y, pivot.x, pivot.y);
+   fill(0, 155, 235);
+   stroke(0);
+   rect(pos.x, pos.y, 10, 10);
+ }
+}
+
 class Spring extends Harmonic
 {
  float constant, amp;
@@ -101,14 +149,14 @@ class Spring extends Harmonic
    {
       accel.set(0,0);
       /*Get spring acceleration, distance vector from the equi to the bob times -k*/
-      distanceVec = pos.get();
+     distanceVec = pos.get();
       distanceVec.sub(equi);
       distanceVec.mult(-constant*distanceVec.mag());
       accel = distanceVec.get();
       
       /*Get gravitational acceleration*/
       accel.add(getGravitationalField(pos));
-      
+    //  print(getGravitationalField(pos).x+"\n");
       vel.add(accel.x/nSteps, accel.y/nSteps, 0);
       pos.add(vel.x/nSteps, vel.y/nSteps, 0); 
    }
