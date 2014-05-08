@@ -18,12 +18,12 @@ ArrayList harmonicList = new ArrayList<Harmonic>();
 void setup()
 {
  size(800, 600); 
- Spring s = new Spring( width/2, height/2, width/2+100, height/2, 0.0001, 10^500);
- Spring s1 = new Spring( width/2, height/2, width/2-100, height/2+100, 0.0001, 10^500);
+ Spring s = new Spring( width/2, height/2, width/2+100, height/2, 0.0001, 10^50);
+ Spring s1 = new Spring( width/2, height/2, width/2-100, height/2+100, 0.0001, 10^50);
  harmonicList.add(s);
  harmonicList.add(s1);
 
- HardPendulum h = new HardPendulum(width/2, height/2, width/2, height/2+100, 10^50);
+ SoftPendulum h = new SoftPendulum(width/2, height/2, width/2, height/2+100, 10^50);
  harmonicList.add(h);
  rectMode(CENTER);
 }
@@ -92,16 +92,19 @@ class HardPendulum extends Harmonic
   this.mass = mass;
   vel = new PVector(0,0);
   accel = new PVector(0,0); 
+  cordLen = dist( pivotX, pivotY, x, y );
  }
  
  void move()
  {
-   PVector gravField = getGravitationalField(pos);
+   accel.set(getGravitationalField(pos));
    float gravDotNorm;
+   float radialVel;
    PVector PVectorNorm = pos.get();
    PVectorNorm.sub(pivot);
    PVectorNorm.rotate(PI/2);
    //print(PVectorNorm.y+"\n");
+   /*
    PVectorNorm = hat( PVectorNorm );
  //  print(PVectorNorm.x+"\n");
    gravDotNorm = PVectorNorm.dot(gravField);
@@ -109,11 +112,86 @@ class HardPendulum extends Harmonic
    PVectorNorm.mult(gravDotNorm);
   // print(PVectorNorm.x+"\n");
    accel.set(PVectorNorm);
-   accel.mult(10000);
+   accel.mult(10000);*/
+   
+   /* Find the unit normal vector pointing 90 degrees out from the pivot->bob vector*/
+   PVectorNorm = hat( PVectorNorm );
+   PVectorNorm.rotate(PI/2);
+   /* Find the velocity in this vector*/
+   radialVel = vel.dot(PVectorNorm);
+   
+   /*Rotate this vector back*/
+   PVectorNorm.rotate(PI/2);
+   PVectorNorm.mult(pow(radialVel,2)/cordLen); 
+   
+   accel.add( PVectorNorm );
+   
    vel.add(accel.x/nSteps, accel.y/nSteps, 0);
    pos.add(vel.x/nSteps, vel.y/nSteps, 0); 
  }
  
+ void drawSelf()
+ {
+   stroke(155,235,11);
+   line(pos.x, pos.y, pivot.x, pivot.y);
+   fill(0, 155, 235);
+   stroke(0);
+   rect(pos.x, pos.y, 10, 10);
+ }
+}
+
+class SoftPendulum extends Harmonic
+{
+ PVector pivot;
+ float cordLen; //This is the distance the pendulum is restricted to being from the pivot 
+ boolean pivotClicked;
+ 
+ SoftPendulum( float pivotX, float pivotY, float x, float y, float mass )
+ {
+  pivot = new PVector(pivotX, pivotY);
+  pos = new PVector(x ,y);
+  this.mass = mass;
+  vel = new PVector(0,0);
+  accel = new PVector(0,0); 
+  cordLen = dist( pivotX, pivotY, x, y );
+ }
+ 
+ void move()
+ {
+   accel.set(getGravitationalField(pos));
+   float gravDotNorm;
+   float radialVel;
+   PVector PVectorNorm = pos.get();
+   PVectorNorm.sub(pivot);
+   PVectorNorm.rotate(PI/2);
+   //print(PVectorNorm.y+"\n");
+   /*
+   PVectorNorm = hat( PVectorNorm );
+ //  print(PVectorNorm.x+"\n");
+   gravDotNorm = PVectorNorm.dot(gravField);
+  // print(gravField.x+"\n");
+   PVectorNorm.mult(gravDotNorm);
+  // print(PVectorNorm.x+"\n");
+   accel.set(PVectorNorm);
+   accel.mult(10000);*/
+   if( dist(pos.x, pos.y, pivot.x, pivot.y) > cordLen )
+   { 
+    /* Find the unit normal vector pointing 90 degrees out from the pivot->bob vector*/
+    PVectorNorm = hat( PVectorNorm );
+    PVectorNorm.rotate(PI/2);
+    /* Find the velocity in this vector*/
+    radialVel = vel.dot(PVectorNorm);
+    
+    /*Rotate this vector back*/
+    PVectorNorm.rotate(PI/2);
+    PVectorNorm.mult(pow(radialVel,2)/cordLen); 
+  
+    accel.add( PVectorNorm );
+   
+    vel.add(accel.x/nSteps, accel.y/nSteps, 0);
+    pos.add(vel.x/nSteps, vel.y/nSteps, 0);
+   } 
+ }
  void drawSelf()
  {
    stroke(155,235,11);
