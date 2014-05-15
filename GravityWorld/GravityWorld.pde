@@ -84,6 +84,8 @@ class HardPendulum extends Harmonic
  PVector pivot;
  float cordLen; //This is the distance the pendulum is restricted to being from the pivot 
  boolean pivotClicked;
+ float theta; //Angle made with the vertical.
+ float theta_dot; //rate of change of theta
  
  HardPendulum( float pivotX, float pivotY, float x, float y, float mass )
  {
@@ -93,41 +95,23 @@ class HardPendulum extends Harmonic
   vel = new PVector(0,0);
   accel = new PVector(0,0); 
   cordLen = dist( pivotX, pivotY, x, y );
+  
+  theta_dot = 0.0;
+  /* Figure out theta now*/
+  if(pos.y < pivot.y)
+    theta = atan((pos.x-pivot.x)/(pos.y-pivot.y));
+  else if(pivotX < bobX)
+    theta = PI/2 + atan((pivot.y-pos.y)/(pos.x-pivot.x));
+  else
+    theta = -PI/2 - atan((pivot.y-pos.y)/(pivot.x-pos.x));
  }
  
  void move()
  {
+   float theta_dot_dot; //Angular accelleration
    accel.set(getGravitationalField(pos));
-   float gravDotNorm;
-   float radialVel;
-   PVector PVectorNorm = pos.get();
-   PVectorNorm.sub(pivot);
-   PVectorNorm.rotate(PI/2);
-   //print(PVectorNorm.y+"\n");
-   /*
-   PVectorNorm = hat( PVectorNorm );
- //  print(PVectorNorm.x+"\n");
-   gravDotNorm = PVectorNorm.dot(gravField);
-  // print(gravField.x+"\n");
-   PVectorNorm.mult(gravDotNorm);
-  // print(PVectorNorm.x+"\n");
-   accel.set(PVectorNorm);
-   accel.mult(10000);*/
-   
-   /* Find the unit normal vector pointing 90 degrees out from the pivot->bob vector*/
-   PVectorNorm = hat( PVectorNorm );
-   PVectorNorm.rotate(PI/2);
-   /* Find the velocity in this vector*/
-   radialVel = vel.dot(PVectorNorm);
-   
-   /*Rotate this vector back*/
-   PVectorNorm.rotate(PI/2);
-   PVectorNorm.mult(pow(radialVel,2)/cordLen); 
-   
-   accel.add( PVectorNorm );
-   
-   vel.add(accel.x/nSteps, accel.y/nSteps, 0);
-   pos.add(vel.x/nSteps, vel.y/nSteps, 0); 
+   /*calculate where "down" is*/
+    
  }
  
  void drawSelf()
