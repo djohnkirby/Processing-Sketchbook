@@ -109,9 +109,11 @@ class HardPendulum extends Harmonic
  void move()
  {
    float theta_dot_dot; //Angular accelleration
+   float down;
    accel.set(getGravitationalField(pos));
    /*calculate where "down" is*/
-    
+   down = PI/2 + atan2(accel.y, accel.x);
+   
  }
  
  void drawSelf()
