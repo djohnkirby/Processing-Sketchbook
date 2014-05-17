@@ -100,7 +100,7 @@ class HardPendulum extends Harmonic
   /* Figure out theta now*/
   if(pos.y < pivot.y)
     theta = atan((pos.x-pivot.x)/(pos.y-pivot.y));
-  else if(pivotX < bobX)
+  else if(pivot.x < pos.x)
     theta = PI/2 + atan((pivot.y-pos.y)/(pos.x-pivot.x));
   else
     theta = -PI/2 - atan((pivot.y-pos.y)/(pivot.x-pos.x));
@@ -112,8 +112,12 @@ class HardPendulum extends Harmonic
    float down;
    accel.set(getGravitationalField(pos));
    /*calculate where "down" is*/
-   down = PI/2 + atan2(accel.y, accel.x);
+   down = theta - atan2(accel.y, accel.x);
    
+   theta_dot_dot = -1*accel.mag()/cordLen*sin(down);
+   theta_dot = theta_dot + theta_dot_dot;
+   theta = theta + theta_dot;
+   pos.set( pivot.x + cordLen*sin(theta), pivot.y + cordLen*cos(theta));
  }
  
  void drawSelf()
